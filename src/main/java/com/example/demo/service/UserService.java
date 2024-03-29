@@ -138,6 +138,19 @@ public class UserService {
     public User login(UserLoginDTO userLogin) {
         String userId = userLogin.getUserId();
         String enteredPassword = userLogin.getPassword();
-//        Optional<User>
+        Optional<User> optionalUser = Optional.ofNullable(userRepository.findByUserId(userId));
+        if (!optionalUser.isPresent()) throw new LoginFailedException("You Entered Wrong User Id or Password");
+        User user = optionalUser.get();
+        String originalHashedPassword = user.getPassword();
+        String newRawPassword = enteredPassword.concat(secretKey);
+//        String newHashedPassword = hashPassword(newRawPassword);
+        Boolean passwordMatched = passwordMatcher(originalHashedPassword, newRawPassword);
+        if (passwordMatched != null && !passwordMatched) throw new LoginFailedException("Entered Wrong Password");
+        return user;
+    }
+
+    private boolean passwordMatcher(String originalHashPassword, String newHashedPassword) {
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        return bCryptPasswordEncoder.matches(newHashedPassword, originalHashPassword);
     }
 }

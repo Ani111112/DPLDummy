@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.DTO.UserDTO;
 import com.example.demo.DTO.UserLoginDTO;
+import com.example.demo.exception.LoginFailedException;
 import com.example.demo.exception.UserIdNotExitsException;
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
@@ -44,6 +45,11 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody UserLoginDTO userLogin) {
-        User loginUser = userService.login(userLogin);
+        try {
+            User loginUser = userService.login(userLogin);
+            return new ResponseEntity<>(loginUser, HttpStatus.ACCEPTED);
+        } catch (LoginFailedException exception) {
+            return new ResponseEntity<>(exception.getMessage(), HttpStatus.NOT_FOUND);
+        }
     }
 }
