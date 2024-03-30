@@ -143,9 +143,8 @@ public class UserService {
         User user = optionalUser.get();
         String originalHashedPassword = user.getPassword();
         String newRawPassword = enteredPassword.concat(secretKey);
-//        String newHashedPassword = hashPassword(newRawPassword);
-        Boolean passwordMatched = passwordMatcher(originalHashedPassword, newRawPassword);
-        if (passwordMatched != null && !passwordMatched) throw new LoginFailedException("Entered Wrong Password");
+        boolean passwordMatched = passwordMatcher(originalHashedPassword, newRawPassword);
+        if (!passwordMatched) throw new LoginFailedException("You Entered Wrong User Id or Password");
         return user;
     }
 
