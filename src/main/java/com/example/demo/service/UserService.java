@@ -4,12 +4,15 @@ import com.example.demo.DTO.UserDTO;
 import com.example.demo.DTO.UserLoginDTO;
 import com.example.demo.exception.*;
 import com.example.demo.model.Address;
+import com.example.demo.model.Authority;
 import com.example.demo.model.User;
 import com.example.demo.repository.AddressRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.transformer.UserTransformer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +21,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 
 @Service
 public class UserService {
@@ -46,7 +46,7 @@ public class UserService {
         String encodedPassword = hashPassword(newPassword);
         user.setPassword(encodedPassword);
         User userFromUserDto = UserTransformer.UserDtoToUser(user);
-        userFromUserDto.getAddressList().forEach(address -> address.setUser(userFromUserDto));
+        userFromUserDto.getAddressList().forEach(address -> address.setUsers(userFromUserDto));
         User savedUser = userRepository.save(userFromUserDto);
         String otp = generateOtp();
         verifyEmail(savedUser.getEmailId(), otp);
@@ -78,7 +78,7 @@ public class UserService {
             javax.mail.Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(senderEmail));
             message.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(emailId));
-            message.setSubject("Application for Java Backend Developer Position");
+            message.setSubject("Your OTP");
 
             // Create the message part
             BodyPart messageBodyPart = new MimeBodyPart();
@@ -151,5 +151,20 @@ public class UserService {
     private boolean passwordMatcher(String originalHashPassword, String newHashedPassword) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         return bCryptPasswordEncoder.matches(newHashedPassword, originalHashPassword);
+    }
+
+    public User giveRole(String userId, List<Authority> roles) {
+        Optional<User> userOptional = Optional.ofNullable(userRepository.findByUserId(userId));
+        if (!userOptional.isPresent()) throw new UserIdNotExitsException("User id is wrong");
+        User savedUser = userOptional.get();
+        List<Authority> userRole = savedUser.getAuthorities() == null ? new ArrayList<>() : savedUser.getAuthorities();
+        roles.forEach(role -> {
+            List<User> userList = role.getUsers() == null ? new ArrayList<>() : role.getUsers();
+            userList.add(savedUser);
+            role.setUsers(userList);
+        });
+        userRole.addAll(roles);
+        savedUser.setAuthorities(userRole);
+        return userRepository.save(savedUser);
     }
 }
