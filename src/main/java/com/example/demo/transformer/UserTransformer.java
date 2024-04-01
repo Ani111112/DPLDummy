@@ -7,8 +7,7 @@ public class UserTransformer {
     public static User UserDtoToUser(UserDTO userDTO) {
         return User.builder()
                 .userId(userDTO.getUserId())
-                .name(userDTO.getName())
-                .admin(false)
+                .userName(userDTO.getName())
                 .emailId(userDTO.getEmailId())
                 .addressList(userDTO.getAddress())
                 .password(userDTO.getPassword())

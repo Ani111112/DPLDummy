@@ -22,12 +22,11 @@ public class Address {
     private String postalCode;
     @Column(unique = true)
     private String primaryMobileNumber;
-    @Column(unique = true)
     private String secondaryMobileNumber;
     private String country;
     private String state;
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;
+    private User users;
 }
